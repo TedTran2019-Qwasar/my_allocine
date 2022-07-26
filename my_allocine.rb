@@ -83,7 +83,9 @@ requests["Find the name of all reviewers who have rated 7 or more stars to their
   JOIN
     movies_ratings_reviews ON reviews.id = movies_ratings_reviews.rev_id
   WHERE
-    rev_stars >= 7;
+    rev_stars >= 7
+  ORDER BY
+    rev_name;
 "
 requests["Find the titles of the movies with ID 905, 907, 917"] = "
   SELECT
@@ -143,7 +145,7 @@ requests["Find the first and last names of all the actors who were cast in the m
 
 requests["Find the name of movie and director who directed a movies that casted a role as Sean Maguire"] = "
     SELECT
-      mov_title, dir_fname, dir_lname
+      dir_fname, dir_lname, mov_title
     FROM
       movies_actors
     JOIN
@@ -156,22 +158,17 @@ requests["Find the name of movie and director who directed a movies that casted 
       role = 'Sean Maguire';
 "
 
-# This one picks actors who haven't acted between 1990 and 2000, but have acted at least once outside of that period.
-requests["Find all the actors who have not acted in any movie between 1990 and 2000"] = "
+# Hmm, what about actors who have never acted in a movie?
+requests["Find all the actors who have not acted in any movie between 1990 and 2000 (select only actor first name, last name, movie title and release year)"] = "
   SELECT
-    DISTINCT actors.*
+    DISTINCT act_fname, act_lname, mov_title, mov_year
   FROM
     actors
-  LEFT JOIN movies_actors ON actors.id = movies_actors.act_id
+  JOIN movies_actors ON actors.id = movies_actors.act_id
   JOIN
-    movies ON movies_actors.mov_id = (
-      SELECT DISTINCT
-        id
-      FROM
-        movies
-      WHERE
-        mov_year < 1990 OR mov_year > 2000
-    );
+    movies ON movies_actors.mov_id = movies.id
+  WHERE
+    mov_year NOT BETWEEN 1990 AND 2000;
 "
 
 =begin
@@ -194,4 +191,20 @@ JOIN
   )
 JOIN
   actors on act_id = actors.id;
+
+# This one picks actors who haven't acted between 1990 and 2000, but have acted at least once outside of that period.
+SELECT
+  DISTINCT actors.*
+FROM
+  actors
+LEFT JOIN movies_actors ON actors.id = movies_actors.act_id
+JOIN
+  movies ON movies_actors.mov_id = (
+    SELECT DISTINCT
+      id
+    FROM
+      movies
+    WHERE
+      mov_year < 1990 OR mov_year > 2000
+  );
 =end
